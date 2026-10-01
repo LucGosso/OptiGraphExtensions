@@ -198,10 +198,10 @@
                                         }
                                     </td>
                                     <td>
-                                        <small>@(synonym.CreatedBy ?? "Unknown")</small>
+                                        <small>@(synonym.CreatedBy ?? "Optimizely Graph Sync")</small>
                                     </td>
                                     <td>
-                                        <small>@(synonym.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Unknown")</small>
+                                        <small>@(synonym.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Optimizely Graph Sync")</small>
                                     </td>
                                     <td class="epi-align-right">
                                         @if (IsEditing && EditingSynonym.Id == synonym.Id)

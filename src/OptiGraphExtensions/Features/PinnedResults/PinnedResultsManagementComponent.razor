@@ -107,10 +107,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <small>@(collection.CreatedBy ?? "Unknown")</small>
+                                        <small>@(collection.CreatedBy ?? "Optimizely Graph Sync")</small>
                                     </td>
                                     <td>
-                                        <small>@(collection.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Unknown")</small>
+                                        <small>@(collection.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Optimizely Graph Sync")</small>
                                     </td>
                                     <td>
                                         <button @onclick="async () => await ConfirmAndDeleteCollection(collection.Id)" class="epi-button epi-button--danger epi-button--small"
@@ -404,10 +404,10 @@
                                             }
                                         </td>
                                         <td>
-                                            <small>@(pinnedResult.CreatedBy ?? "Unknown")</small>
+                                            <small>@(pinnedResult.CreatedBy ?? "Optimizely Graph Sync")</small>
                                         </td>
                                         <td>
-                                            <small>@(pinnedResult.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Unknown")</small>
+                                            <small>@(pinnedResult.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Optimizely Graph Sync")</small>
                                         </td>
                                         <td class="epi-align-right">
                                             <div class="epi-button-group">

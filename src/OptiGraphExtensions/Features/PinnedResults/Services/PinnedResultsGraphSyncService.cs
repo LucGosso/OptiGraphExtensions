@@ -234,7 +234,7 @@ public class PinnedResultsGraphSyncService : IPinnedResultsGraphSyncService
         return graphResponse?.Id ?? string.Empty;
     }
 
-    public async Task<bool> SyncPinnedResultsFromOptimizelyGraphAsync(Guid collectionId)
+    public async Task<int> SyncPinnedResultsFromOptimizelyGraphAsync(Guid collectionId)
     {
         var collection = await _collectionService.GetCollectionByIdAsync(collectionId);
         if (collection == null || string.IsNullOrEmpty(collection.GraphCollectionId))
@@ -262,12 +262,14 @@ public class PinnedResultsGraphSyncService : IPinnedResultsGraphSyncService
         var existingResults = await _pinnedResultService.GetAllPinnedResultsAsync(collectionId);
         var targetNameLookup = existingResults
             .Where(r => !string.IsNullOrEmpty(r.TargetKey) && !string.IsNullOrEmpty(r.TargetName))
+            .DistinctBy(r => r.TargetKey)
             .ToDictionary(r => r.TargetKey!, r => r.TargetName);
 
         // Clear existing pinned results for this collection
         await _pinnedResultService.DeletePinnedResultsByCollectionIdAsync(collectionId);
 
         // Create new pinned results from Graph data
+        int syncedCount = 0;
         foreach (var graphItem in graphPinnedResults)
         {
             // Look up preserved TargetName by TargetKey
@@ -286,9 +288,10 @@ public class PinnedResultsGraphSyncService : IPinnedResultsGraphSyncService
                 null, // CreatedBy
                 graphItem.Id // GraphId
             );
+            syncedCount++;
         }
 
-        return true;
+        return syncedCount;
     }
 
     private (string gatewayUrl, string hmacKey, string hmacSecret) GetAndValidateGraphConfiguration()

@@ -227,7 +227,7 @@ public class ContentSearchService : IContentSearchService
                 Url = item.RelativePath ?? string.Empty,
                 ContentType = item.ContentType?.Count >= 2 
                     ? item.ContentType[item.ContentType.Count - 2] 
-                    : (item.ContentType?.FirstOrDefault() ?? "Unknown"),
+                    : (item.ContentType?.FirstOrDefault() ?? "Optimizely Graph Sync"),
                 Language = item.Language?.Name ?? string.Empty
             })
             .ToList();

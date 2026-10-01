@@ -519,8 +519,8 @@ namespace OptiGraphExtensions.Features.PinnedResults
 
             await ExecuteWithSyncHandlingAsync(async () =>
             {
-                await GraphSyncService.SyncPinnedResultsFromOptimizelyGraphAsync(SelectedCollectionId.Value);
-                SetSuccessMessage("Successfully synced pinned results from Optimizely Graph.");
+                    var syncedCount = await GraphSyncService.SyncPinnedResultsFromOptimizelyGraphAsync(SelectedCollectionId.Value);
+                    SetSuccessMessage($"Successfully synced {syncedCount} pinned results from Optimizely Graph.");
                 await LoadPinnedResults();
             }, "syncing pinned results from Optimizely Graph");
         }
