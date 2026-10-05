@@ -426,8 +426,8 @@ namespace OptiGraphExtensions.Features.PinnedResults
             {
                 NewPinnedResult.CollectionId = SelectedCollectionId ?? Guid.Empty;
                 await ValidatePinnedResultModel(NewPinnedResult);
-                
-                await PinnedResultService.CreatePinnedResultAsync(
+
+                var result = await PinnedResultService.CreatePinnedResultAsync(
                     NewPinnedResult.CollectionId,
                     NewPinnedResult.Phrases,
                     NewPinnedResult.TargetKey,
@@ -441,7 +441,10 @@ namespace OptiGraphExtensions.Features.PinnedResults
                 NewPinnedResult = new();
                 // Reset content search state
                 ClearContentSelection();
-                SetSuccessMessage("Pinned result created successfully.");
+                // Show sync status in message
+                SetSuccessMessage(result?.GraphId != null 
+                    ? "Pinned result created and synced to Optimizely Graph." 
+                    : "Pinned result created (inactive - not yet in Optimizely Graph).");
                 await LoadPinnedResults();
             }, "creating pinned result", showLoading: false);
         }
@@ -451,8 +454,8 @@ namespace OptiGraphExtensions.Features.PinnedResults
             await ExecuteWithLoadingAndErrorHandlingAsync(async () =>
             {
                 await ValidatePinnedResultModel(EditingPinnedResult);
-                
-                await PinnedResultService.UpdatePinnedResultAsync(
+
+                var result = await PinnedResultService.UpdateAndSyncPinnedResultAsync(
                     EditingPinnedResult.Id,
                     EditingPinnedResult.Phrases,
                     EditingPinnedResult.TargetKey,
@@ -462,7 +465,16 @@ namespace OptiGraphExtensions.Features.PinnedResults
                     EditingPinnedResult.IsActive
                 );
 
-                SetSuccessMessage("Pinned result updated successfully.");
+                if (result.Success)
+                {
+                    SetSuccessMessage(result.GraphId != null
+                        ? "Pinned result updated and synced to Optimizely Graph."
+                        : "Pinned result updated locally (not in Optimizely Graph).");
+                }
+                else
+                {
+                    SetErrorMessage($"Update failed: {result.Error}");
+                }
                 CancelEditPinnedResult();
                 await LoadPinnedResults();
             }, "updating pinned result", showLoading: false);
@@ -472,10 +484,85 @@ namespace OptiGraphExtensions.Features.PinnedResults
         {
             await ExecuteWithLoadingAndErrorHandlingAsync(async () =>
             {
-                await PinnedResultService.DeletePinnedResultAsync(id);
-                SetSuccessMessage("Pinned result deleted successfully.");
+                var result = await PinnedResultService.DeleteAndSyncPinnedResultAsync(id);
+                if (result.Success)
+                {
+                    SetSuccessMessage("Pinned result deleted from both local database and Optimizely Graph.");
+                }
+                else
+                {
+                    SetErrorMessage($"Delete failed: {result.Error}");
+                }
                 await LoadPinnedResults();
             }, "deleting pinned result", showLoading: false);
+        }
+
+        protected async Task ActivatePinnedResult(Guid id)
+        {
+            await ExecuteWithLoadingAndErrorHandlingAsync(async () =>
+            {
+                var result = await PinnedResultService.ActivatePinnedResultAsync(id, User.Identity?.Name);
+                if (result.Success)
+                {
+                    SetSuccessMessage(result.GraphId != null
+                        ? "Pinned result activated and synced to Optimizely Graph."
+                        : "Pinned result activated (synchronization may be pending).");
+                }
+                else
+                {
+                    SetErrorMessage($"Activation failed: {result.Error}");
+                }
+                await LoadPinnedResults();
+            }, "activating pinned result", showLoading: false);
+        }
+
+        protected async Task DeactivatePinnedResult(Guid id)
+        {
+            await ExecuteWithLoadingAndErrorHandlingAsync(async () =>
+            {
+                var result = await PinnedResultService.DeactivatePinnedResultAsync(id);
+                if (result.Success)
+                {
+                    SetSuccessMessage("Pinned result deactivated and removed from Optimizely Graph.");
+                }
+                else
+                {
+                    SetErrorMessage($"Deactivation failed: {result.Error}");
+                }
+                await LoadPinnedResults();
+            }, "deactivating pinned result", showLoading: false);
+        }
+
+        protected async Task SyncPinnedResultsToGraph()
+        {
+            if (!SelectedCollectionId.HasValue)
+            {
+                SetErrorMessage("Please select a collection first.");
+                return;
+            }
+
+            await ExecuteWithSyncHandlingAsync(async () =>
+            {
+                var syncedCount = await CollectionService.SyncPinnedResultsToGraphAsync(SelectedCollectionId.Value);
+                SetSuccessMessage($"Successfully synced {syncedCount} pinned results to Optimizely Graph.");
+                await LoadPinnedResults();
+            }, "syncing pinned results to Graph");
+        }
+
+        protected async Task SyncPinnedResultsFromGraphReconciliation()
+        {
+            if (!SelectedCollectionId.HasValue)
+            {
+                SetErrorMessage("Please select a collection first.");
+                return;
+            }
+
+            await ExecuteWithSyncHandlingAsync(async () =>
+            {
+                var syncedCount = await CollectionService.SyncPinnedResultsFromGraphWithReconciliationAsync(SelectedCollectionId.Value);
+                SetSuccessMessage($"Successfully synced {syncedCount} pinned results from Optimizely Graph (reconciliation mode).");
+                await LoadPinnedResults();
+            }, "syncing pinned results from Graph with reconciliation");
         }
 
         protected void StartEditPinnedResult(PinnedResult pinnedResult)

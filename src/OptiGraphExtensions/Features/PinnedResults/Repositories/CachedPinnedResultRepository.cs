@@ -51,6 +51,12 @@ namespace OptiGraphExtensions.Features.PinnedResults.Repositories
             return result;
         }
 
+        public async Task<PinnedResult?> GetByIdAsNoTrackingAsync(Guid id)
+        {
+            // Don't cache no-tracking results to ensure fresh reads
+            return await _repository.GetByIdAsNoTrackingAsync(id);
+        }
+
         public async Task<PinnedResult?> GetByIdWithCollectionAsync(Guid id)
         {
             // Don't cache results with navigation properties to avoid serialization issues
@@ -88,6 +94,23 @@ namespace OptiGraphExtensions.Features.PinnedResults.Repositories
         public async Task<bool> DeleteAsync(Guid id)
         {
             var result = await _repository.DeleteAsync(id);
+
+            if (result)
+            {
+                // Invalidate related cache entries
+                await InvalidatePinnedResultCacheAsync();
+
+                // Remove the specific entity from cache
+                var cacheKey = CacheKeyBuilder.BuildEntityKey<PinnedResult>(id);
+                await _cacheService.RemoveAsync(cacheKey);
+            }
+
+            return result;
+        }
+
+        public async Task<bool> DeleteByIdDirectAsync(Guid id)
+        {
+            var result = await _repository.DeleteByIdDirectAsync(id);
 
             if (result)
             {

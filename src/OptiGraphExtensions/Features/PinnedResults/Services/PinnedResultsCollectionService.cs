@@ -117,7 +117,7 @@ namespace OptiGraphExtensions.Features.PinnedResults.Services
 
                     // Convert timestamps from Unix milliseconds to DateTime
                     //var createdAt = DateTimeOffset.FromUnixTimeMilliseconds(graphCollection.CreatedAt).UtcDateTime;
-                    
+
                     // Create or update local collection
                     var localCollection = new PinnedResultsCollection
                     {
@@ -141,5 +141,25 @@ namespace OptiGraphExtensions.Features.PinnedResults.Services
                 return await _collectionRepository.GetAllAsync();
             }
         }
+
+        /// <summary>
+        /// Syncs all active pinned results for a collection to Graph.
+        /// This is a manual reconciliation/repair operation.
+        /// </summary>
+        public async Task<int> SyncPinnedResultsToGraphAsync(Guid collectionId)
+        {
+            return await GraphSyncService.SyncPinnedResultsToOptimizelyGraphAsync(collectionId) ? 1 : 0;
+        }
+
+        /// <summary>
+        /// Performs reconciliation sync from Graph using GraphId as the key.
+        /// Preserves local-only metadata (CreatedBy, CreatedAt, TargetName).
+        /// </summary>
+        public async Task<int> SyncPinnedResultsFromGraphWithReconciliationAsync(Guid collectionId)
+        {
+            return await GraphSyncService.SyncPinnedResultsFromOptimizelyGraphWithReconciliationAsync(collectionId);
+        }
     }
 }
+
+

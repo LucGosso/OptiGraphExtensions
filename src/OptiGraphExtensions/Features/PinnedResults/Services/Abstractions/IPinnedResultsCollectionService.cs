@@ -12,5 +12,17 @@ namespace OptiGraphExtensions.Features.PinnedResults.Services.Abstractions
         Task<bool> CollectionExistsAsync(Guid id);
         Task<PinnedResultsCollection?> UpdateGraphCollectionIdAsync(Guid id, string? graphCollectionId);
         Task<IEnumerable<PinnedResultsCollection>> SyncCollectionsFromGraphAsync();
+
+        /// <summary>
+        /// Syncs all active pinned results for a collection to Graph.
+        /// This is a manual reconciliation/repair operation.
+        /// </summary>
+        Task<int> SyncPinnedResultsToGraphAsync(Guid collectionId);
+
+        /// <summary>
+        /// Performs reconciliation sync from Graph using GraphId as the key.
+        /// Preserves local-only metadata (CreatedBy, CreatedAt, TargetName).
+        /// </summary>
+        Task<int> SyncPinnedResultsFromGraphWithReconciliationAsync(Guid collectionId);
     }
 }
